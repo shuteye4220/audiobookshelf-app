@@ -1,5 +1,5 @@
 <template>
-  <modals-modal v-model="show" :width="400" max-width="95%" height="100%">
+  <modals-modal v-model="show" :width="400" max-width="95%" height="100%" :label="$strings.LabelChapters">
     <template #outer>
       <div v-if="currentChapter" class="absolute top-10 left-4 z-40 pt-1" style="max-width: 80%">
         <p class="text-white text-lg truncate">{{ chapters.length }} {{ $strings.LabelChapters }}</p>
@@ -19,8 +19,8 @@
             <p class="text-fg-muted text-sm" style="letter-spacing: -0.5px">{{ $strings.LabelDuration }}</p>
           </div>
         </div>
-        <ul class="h-full w-full" role="listbox" aria-labelledby="listbox-label">
-          <li v-for="chapter in chapters" :key="chapter.id" :id="`chapter-row-${chapter.id}`" class="text-fg select-none relative cursor-pointer" :class="currentChapterId === chapter.id ? 'bg-primary bg-opacity-80' : ''" role="option" @click="clickedOption(chapter)">
+        <ul class="h-full w-full" role="listbox" :aria-label="$strings.LabelChapters">
+          <li v-for="chapter in chapters" :key="chapter.id" :id="`chapter-row-${chapter.id}`" class="text-fg select-none relative cursor-pointer" :class="currentChapterId === chapter.id ? 'bg-primary bg-opacity-80' : ''" role="option" :aria-selected="currentChapterId === chapter.id ? 'true' : 'false'" @click="clickedOption(chapter)">
             <div class="grid grid-cols-[1fr_auto_auto] gap-2 px-3 py-3 items-start">
               <p class="font-normal line-clamp-2 text-sm text-fg/80">{{ chapter.title }}</p>
               <div class="text-right" style="min-width: 60px">

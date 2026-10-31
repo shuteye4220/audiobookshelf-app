@@ -2,10 +2,10 @@
   <div class="w-full h-full py-4">
     <div class="flex items-center mb-2 space-x-2 px-4">
       <p class="text-lg font-bold">{{ $strings.ButtonLogs }}</p>
-      <ui-icon-btn outlined borderless :icon="isCopied ? 'check' : 'content_copy'" @click="copyToClipboard" />
-      <ui-icon-btn outlined borderless icon="share" @click="shareLogs" />
+      <ui-icon-btn outlined borderless :icon="isCopied ? 'check' : 'content_copy'" :label="isCopied ? $strings.LabelCopied : $strings.ButtonCopyToClipboard" @click="copyToClipboard" />
+      <ui-icon-btn outlined borderless icon="share" :label="$strings.ButtonShare" @click="shareLogs" />
       <div class="flex-grow"></div>
-      <ui-icon-btn outlined borderless icon="more_vert" @click="showDialog = true" />
+      <ui-icon-btn outlined borderless icon="more_vert" :label="$strings.LabelMore" @click="showDialog = true" />
     </div>
 
     <div class="w-full h-[calc(100%-40px)] overflow-y-auto relative" ref="logContainer">

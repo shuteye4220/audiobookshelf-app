@@ -9,7 +9,7 @@
       <div ref="container" class="w-full rounded-lg bg-primary border border-white border-opacity-20 overflow-y-auto overflow-x-hidden" style="max-height: 80vh" @click.stop>
         <div class="w-full h-full p-4" v-if="showAddHeader">
           <div class="mb-4">
-            <ui-icon-btn icon="arrow_back" borderless @click="showAddHeader = false" />
+            <ui-icon-btn icon="arrow_back" :label="$strings.ButtonBack" borderless @click="showAddHeader = false" />
           </div>
           <form @submit.prevent="submitForm">
             <ui-text-input-with-label v-model="newHeaderKey" label="Name" class="mb-2" />
