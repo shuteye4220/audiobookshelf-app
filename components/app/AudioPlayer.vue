@@ -85,22 +85,22 @@
       <!-- Playback controls - jump buttons, play/pause, chapter navigation -->
       <div id="playerControls" class="absolute right-0 bottom-0 mx-auto" style="max-width: 414px">
         <div class="flex items-center max-w-full" :class="playerSettings.lockUi ? 'justify-center' : 'justify-between'">
-          <span v-show="showFullscreen && !playerSettings.lockUi" class="material-symbols next-icon text-fg cursor-pointer" :class="showLoadingState ? 'text-opacity-10' : 'text-opacity-75'" @click.stop="jumpChapterStart">first_page</span>
-          <div v-show="!playerSettings.lockUi" class="jump-icon text-fg cursor-pointer flex flex-col items-center" :class="showLoadingState ? 'text-opacity-10' : 'text-opacity-75'" @click.stop="jumpBackwards">
-            <span class="material-symbols text-3xl leading-none">replay</span>
-            <span v-if="showFullscreen" class="jump-label text-[10px] font-semibold leading-tight">{{ jumpBackwardsLabel }}</span>
-          </div>
-          <div class="play-btn cursor-pointer shadow-sm flex items-center justify-center rounded-full text-primary mx-4 relative overflow-hidden" :style="{ backgroundColor: coverRgb }" :class="{ 'animate-spin': seekLoading }" @mousedown.prevent @mouseup.prevent @click.stop="playPauseClick">
+          <button v-show="showFullscreen && !playerSettings.lockUi" type="button" class="material-symbols next-icon text-fg cursor-pointer" :class="showLoadingState ? 'text-opacity-10' : 'text-opacity-75'" :aria-label="$strings.ButtonPreviousChapter" @click.stop="jumpChapterStart"><span aria-hidden="true">first_page</span></button>
+          <button v-show="!playerSettings.lockUi" type="button" class="jump-icon text-fg cursor-pointer flex flex-col items-center" :class="showLoadingState ? 'text-opacity-10' : 'text-opacity-75'" :aria-label="jumpBackwardsA11yLabel" @click.stop="jumpBackwards">
+            <span class="material-symbols text-3xl leading-none" aria-hidden="true">replay</span>
+            <span v-if="showFullscreen" class="jump-label text-[10px] font-semibold leading-tight" aria-hidden="true">{{ jumpBackwardsLabel }}</span>
+          </button>
+          <button type="button" class="play-btn cursor-pointer shadow-sm flex items-center justify-center rounded-full text-primary mx-4 relative overflow-hidden" :style="{ backgroundColor: coverRgb }" :class="{ 'animate-spin': seekLoading }" :aria-label="isPlaying ? $strings.ButtonPause : $strings.ButtonPlay" :aria-busy="showLoadingState || seekLoading ? 'true' : null" @mousedown.prevent @mouseup.prevent @click.stop="playPauseClick">
             <div v-if="!coverBgIsLight" class="absolute top-0 left-0 w-full h-full bg-white bg-opacity-20 pointer-events-none" />
 
-            <span v-if="!showLoadingState" class="material-symbols fill" :class="{ 'text-white': coverRgb && !coverBgIsLight }">{{ seekLoading ? 'autorenew' : !isPlaying ? 'play_arrow' : 'pause' }}</span>
-            <widgets-spinner-icon v-else class="h-8 w-8" />
-          </div>
-          <div v-show="!playerSettings.lockUi" class="jump-icon text-fg cursor-pointer flex flex-col items-center" :class="showLoadingState ? 'text-opacity-10' : 'text-opacity-75'" @click.stop="jumpForward">
-            <span class="material-symbols text-3xl leading-none">forward_media</span>
-            <span v-if="showFullscreen" class="jump-label text-[10px] font-semibold leading-tight">{{ jumpForwardLabel }}</span>
-          </div>
-          <span v-show="showFullscreen && !playerSettings.lockUi" class="material-symbols next-icon text-fg cursor-pointer" :class="nextChapter && !showLoadingState ? 'text-opacity-75' : 'text-opacity-10'" @click.stop="jumpNextChapter">last_page</span>
+            <span v-if="!showLoadingState" class="material-symbols fill" :class="{ 'text-white': coverRgb && !coverBgIsLight }" aria-hidden="true">{{ seekLoading ? 'autorenew' : !isPlaying ? 'play_arrow' : 'pause' }}</span>
+            <widgets-spinner-icon v-else class="h-8 w-8" aria-hidden="true" />
+          </button>
+          <button v-show="!playerSettings.lockUi" type="button" class="jump-icon text-fg cursor-pointer flex flex-col items-center" :class="showLoadingState ? 'text-opacity-10' : 'text-opacity-75'" :aria-label="jumpForwardA11yLabel" @click.stop="jumpForward">
+            <span class="material-symbols text-3xl leading-none" aria-hidden="true">forward_media</span>
+            <span v-if="showFullscreen" class="jump-label text-[10px] font-semibold leading-tight" aria-hidden="true">{{ jumpForwardLabel }}</span>
+          </button>
+          <button v-show="showFullscreen && !playerSettings.lockUi" type="button" class="material-symbols next-icon text-fg cursor-pointer" :class="nextChapter && !showLoadingState ? 'text-opacity-75' : 'text-opacity-10'" :aria-label="$strings.ButtonNextChapter" :aria-disabled="nextChapter ? null : 'true'" @click.stop="jumpNextChapter"><span aria-hidden="true">last_page</span></button>
         </div>
       </div>
 
@@ -111,7 +111,7 @@
           <div class="flex-grow" />
           <p class="font-mono text-fg" style="font-size: 0.8rem">{{ timeRemainingPretty }}</p>
         </div>
-        <div ref="track" class="h-1.5 w-full bg-track/50 relative rounded-full overflow-hidden" :class="{ 'animate-pulse': showLoadingState }" @click.stop>
+        <div ref="track" class="h-1.5 w-full bg-track/50 relative rounded-full overflow-hidden" :class="{ 'animate-pulse': showLoadingState, 'seek-slider-focused': seekSliderFocused }" @click.stop>
           <div ref="readyTrack" class="h-full bg-track-buffered absolute top-0 left-0 rounded-full pointer-events-none" />
           <div ref="bufferedTrack" class="h-full bg-track absolute top-0 left-0 rounded-full pointer-events-none" />
           <div ref="playedTrack" class="h-full bg-track-cursor absolute top-0 left-0 rounded-full pointer-events-none" />
@@ -119,6 +119,10 @@
             <div class="bg-track-cursor rounded-full w-3.5 h-3.5 pointer-events-none" />
           </div>
         </div>
+
+        <!-- Seek slider for screen readers and keyboards. Invisible and ignores touch, so the visual
+             track and its drag cursor behave as before; screen readers find it over the track. -->
+        <input ref="seekSlider" type="range" class="seek-slider" step="1" :min="seekSliderMin" :max="seekSliderMax" :value="seekSliderValue" :disabled="playerSettings.lockUi || !totalDuration" :aria-label="seekSliderLabel" :aria-valuetext="seekSliderValueText" @focus="onSeekSliderFocus" @blur="onSeekSliderBlur" @input="onSeekSliderInput" @keydown="onSeekSliderKeydown" />
       </div>
     </div>
 
@@ -136,6 +140,23 @@ import { Dialog } from '@capacitor/dialog'
 import { getAverageColorFromCoverUrl } from '@/utils/coverAverageColor'
 import WrappingMarquee from '@/assets/WrappingMarquee.js'
 import jumpLabelMixin from '@/mixins/jumpLabel'
+
+// One Intl.DurationFormat per language, created on first use (not available in older WebViews)
+const durationFormatters = new Map()
+function getDurationFormatter(languageCode) {
+  if (typeof Intl === 'undefined' || typeof Intl.DurationFormat !== 'function') return null
+  const code = languageCode || 'en-us'
+  if (!durationFormatters.has(code)) {
+    let formatter = null
+    try {
+      formatter = new Intl.DurationFormat(code, { style: 'long' })
+    } catch (error) {
+      formatter = null
+    }
+    durationFormatters.set(code, formatter)
+  }
+  return durationFormatters.get(code)
+}
 
 export default {
   props: {
@@ -186,7 +207,12 @@ export default {
       coverRgb: 'rgb(55, 56, 56)',
       coverBgIsLight: false,
       titleMarquee: null,
-      isRefreshingUI: false
+      isRefreshingUI: false,
+      // Accessible seek slider (screen readers and keyboards)
+      seekSliderValue: 0,
+      seekSliderFocused: false,
+      seekCommitTimer: null,
+      seekCommitRetries: 0
     }
   },
   watch: {
@@ -254,6 +280,42 @@ export default {
     },
     jumpBackwardsLabel() {
       return this.getJumpLabel(this.jumpBackwardsTime)
+    },
+    jumpForwardA11yLabel() {
+      return this.$getString('ButtonJumpForward', [this.spokenDuration(this.jumpForwardTime)])
+    },
+    jumpBackwardsA11yLabel() {
+      return this.$getString('ButtonJumpBackward', [this.spokenDuration(this.jumpBackwardsTime)])
+    },
+    seekUsesChapter() {
+      return !!(this.playerSettings.useChapterTrack && this.currentChapter)
+    },
+    // The slider works in whole seconds of book time; the chapter track limits it to the current chapter
+    seekSliderMin() {
+      return this.seekUsesChapter ? Math.floor(this.currentChapter.start) : 0
+    },
+    seekSliderMax() {
+      const end = this.seekUsesChapter ? this.currentChapter.end : this.totalDuration
+      return Math.max(this.seekSliderMin, Math.ceil(end || 0))
+    },
+    // How far one screen reader swipe or arrow key moves: 2% of the range, between 15 seconds and 5 minutes
+    seekSliderStep() {
+      const range = this.seekSliderMax - this.seekSliderMin
+      return Math.max(15, Math.min(300, range / 50))
+    },
+    seekSliderLabel() {
+      return this.seekUsesChapter ? this.$strings.LabelChapterPosition : this.$strings.LabelPlaybackPosition
+    },
+    // Derived from seekSliderValue (not currentTime) so it only changes when the slider value
+    // changes; otherwise a focused slider could be re-announced every second during playback
+    seekSliderValueText() {
+      let position = Math.max(0, this.seekSliderValue - this.seekSliderMin)
+      let length = this.seekSliderMax - this.seekSliderMin
+      if (this.playerSettings.scaleElapsedTimeBySpeed && this.currentPlaybackRate) {
+        position /= this.currentPlaybackRate
+        length /= this.currentPlaybackRate
+      }
+      return this.$getString('LabelPositionOfDuration', [this.spokenDuration(position), this.spokenDuration(length)])
     },
     jumpForwardTime() {
       return this.$store.getters['getJumpForwardTime']
@@ -596,6 +658,11 @@ export default {
 
       this.updateTimestamp()
       this.updateTrack()
+      // While the slider has focus its value only changes when the user adjusts it,
+      // unless playback has moved into another chapter and left the value out of range
+      if (!this.seekSliderFocused || this.seekSliderValue < this.seekSliderMin || this.seekSliderValue > this.seekSliderMax) {
+        this.syncSeekSlider()
+      }
     },
     updateTrack() {
       // Update progress track UI
@@ -660,6 +727,96 @@ export default {
       this.draggingTouchStartTime = this.currentTime
       this.draggingCurrentTime = this.currentTime
       this.updateTrack()
+    },
+    /**
+     * Duration in words for screen readers, e.g. "1 hour, 5 minutes, 30 seconds".
+     * Uses Intl.DurationFormat in the app language when available, else a timestamp like 1:05:30.
+     * @param {number} seconds
+     */
+    spokenDuration(seconds) {
+      const total = Math.max(0, Math.round(Number(seconds) || 0))
+      const hours = Math.floor(total / 3600)
+      const minutes = Math.floor((total % 3600) / 60)
+      const secs = total % 60
+      const formatter = getDurationFormatter(this.$languageCodes?.current)
+      if (formatter) {
+        try {
+          const text = formatter.format({ hours, minutes, seconds: secs })
+          if (text) return text
+        } catch (error) {
+          // fall through to timestamp
+        }
+      }
+      return this.$secondsToTimestamp(total)
+    },
+    seekPositionNow() {
+      if (this.isDraggingCursor) return this.draggingCurrentTime
+      if (this.seekLoading) return this.seekedTime
+      return this.currentTime
+    },
+    syncSeekSlider() {
+      const value = Math.min(this.seekSliderMax, Math.max(this.seekSliderMin, Math.round(this.seekPositionNow())))
+      if (value !== this.seekSliderValue) this.seekSliderValue = value
+    },
+    onSeekSliderFocus() {
+      this.seekSliderFocused = true
+      this.syncSeekSlider()
+    },
+    onSeekSliderBlur() {
+      this.seekSliderFocused = false
+      // Apply any pending seek straight away rather than waiting for the timer
+      if (this.seekCommitTimer) this.commitSeekPreview()
+    },
+    onSeekSliderInput(e) {
+      // Screen reader increments and arrow keys move the native value by one step. Only the
+      // direction is used: each step moves seekSliderStep from where playback actually is,
+      // so the slider can't lag behind playback while it has focus.
+      const direction = Math.sign(Number(e.target.value) - this.seekSliderValue)
+      if (!direction) return
+      this.setSeekPreview(this.seekPositionNow() + direction * this.seekSliderStep)
+    },
+    onSeekSliderKeydown(e) {
+      const range = this.seekSliderMax - this.seekSliderMin
+      let target = null
+      if (e.key === 'PageUp') target = this.seekPositionNow() + range / 10
+      else if (e.key === 'PageDown') target = this.seekPositionNow() - range / 10
+      else if (e.key === 'Home') target = this.seekSliderMin
+      else if (e.key === 'End') target = this.seekSliderMax
+      if (target === null) return
+      e.preventDefault()
+      this.setSeekPreview(target)
+    },
+    setSeekPreview(time) {
+      if (this.playerSettings.lockUi || !this.totalDuration) return
+      const target = Math.min(this.seekSliderMax, Math.max(this.seekSliderMin, time))
+      this.isDraggingCursor = true
+      this.draggingCurrentTime = target
+      this.seekSliderValue = Math.round(target)
+      // Keep the element in step even when the value is unchanged (e.g. clamped at an end)
+      if (this.$refs.seekSlider) this.$refs.seekSlider.value = String(this.seekSliderValue)
+      this.updateTimestamp()
+      this.updateTrack()
+
+      // Several quick swipes become one seek once adjusting stops
+      clearTimeout(this.seekCommitTimer)
+      this.seekCommitRetries = 0
+      this.seekCommitTimer = setTimeout(this.commitSeekPreview, 600)
+    },
+    commitSeekPreview() {
+      clearTimeout(this.seekCommitTimer)
+      this.seekCommitTimer = null
+      // A touch drag ending may already have applied it
+      if (!this.isDraggingCursor) return
+      // seek() ignores calls while a previous seek is in flight, so wait briefly for it
+      if (this.seekLoading && this.seekCommitRetries < 10) {
+        this.seekCommitRetries++
+        this.seekCommitTimer = setTimeout(this.commitSeekPreview, 300)
+        return
+      }
+      const time = this.draggingCurrentTime
+      this.isDraggingCursor = false
+      if (Math.abs(time - this.currentTime) >= 0.5) this.seek(time)
+      else this.timeupdate()
     },
     async playPauseClick() {
       await this.$hapticsImpact()
@@ -1006,6 +1163,7 @@ export default {
     this.$nextTick(this.init)
   },
   beforeDestroy() {
+    clearTimeout(this.seekCommitTimer)
     if (screen.orientation) {
       // Not available on ios
       screen.orientation.removeEventListener('change', this.screenOrientationChange)
@@ -1070,6 +1228,23 @@ export default {
 }
 .fullscreen #playerTrack {
   bottom: unset;
+}
+/* Accessible seek slider: covers the track area so screen reader touch exploration can find it,
+   but is invisible and lets touches through to the visual track and its drag cursor */
+#playerTrack .seek-slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+/* Show keyboard focus on the visual track, since the slider itself is invisible */
+#playerTrack .seek-slider-focused {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
 }
 
 .cover-wrapper {
